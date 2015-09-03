@@ -1,4 +1,4 @@
-## chekcing data class,levels,completion 
+## functions to check data class,levels,completion 
 info=function(df){
 	df=data.frame(df)
 	level=function(x) length(unique(x))
@@ -11,58 +11,21 @@ info=function(df){
 	return (df1)
 }
 
-## stack data
-stack_data=function(df1,df2){
-  n=ncol(df2)
-  name=colnames(df1)
-  df1=rep(df1,n)
-  colnames(df1)=name
-  df2=stack(df2)
-  return (cbind(df1,df2))
-}
-
-## Frequency Plot
-FreqPlot<-function(df,col,top=20,fill='#33CCFF'){
-  data=data.frame(table(df[col]))
-  data=data[order(data$Freq,decreasing=T),]
-  top=min(c(top,nrow(data)))
-  data=data[1:top,]
-  data=transform(data,Var1=reorder(strtrim(Var1,12),Freq))
-  require(ggplot2)
-  return (ggplot(data,aes(Var1,Freq))+geom_bar(stat='identity',fill=fill)+coord_flip()+theme_bw(base_size=18)+
-    labs(title=col,x='',y='')+
-    geom_text(aes(y=Freq,ymax=1.08*max(Freq),label=paste0(round(Freq/nrow(data),3)*100,'%'),hjust=-0.1)))
-}
-
-## Density Plot
-DensityPlot<-function(df,col,by){
-  require(ggplot2)
-  expr<-paste0('ggplot(',df,',aes(',col,',fill=',by,'))+geom_density(alpha=0.8)+theme_bw()')
-  plot<-eval(parse(text=expr))
-  return(plot)
-}
-
-## SummarizeScoreBy
-SummarizeScoreBy<-function(df,col){
-  x<-ddply(df,col,summarise,count=length(score),
-           mean=mean(score),median=median(score))
-  x<-x[order(x$mean,decreasing = T),]
-  return(x)
-}
-
 # Convert to Binary Table
 binaryTable<-function(df,col){
-  label<-unique(df[col])[,1]
+  label<-unique(df[col])
+  label<-label[!is.na(label)]
+  label<-label[order(label)]
   expr<-paste0('model.matrix(~',col,'+0,df)')
   binaryTable<-eval(parse(text=expr))
   colnames(binaryTable)<-label
   return (binaryTable)
 }
 
-library(lubridate)
 ## calculate customer age
+require(lubridate)
 cal_customer_age<-function(df){
-  this_year<-as.integer(strsplit(date()," ")[[1]][5])
+  this_year<-year(now())
   df<-this_year-year(df)
   return (df)
 }
@@ -87,15 +50,8 @@ group_categorical<-function(df,col,thres=0.01){
 }
 
 ## clean numeric data
+## replace missing value with median
 impute_numeric<-function(df,col){
   df[,col][is.na(df[,col])]<-median(df[,col],na.rm=T)
   return (df)
-}
-
-## score to grade
-score_to_grade<-function(x){
-  cutoff<-c(-Inf,-5,0,10,20,Inf)
-  grades<-c('E','D','C','B','A')
-  y<-cut(x,cutoff,label=grades)
-  return (y)
 }
